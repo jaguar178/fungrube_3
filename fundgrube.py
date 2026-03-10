@@ -1,9 +1,12 @@
 import streamlit as st
 from supabase import create_client, Client
 
-# Supabase Verbindung
-SUPABASE_URL = "DEINE_SUPABASE_URL"
-SUPABASE_KEY = "DEIN_ANON_KEY"
+# -------------------------
+# SUPABASE VERBINDUNG
+# -------------------------
+
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -24,10 +27,12 @@ if st.sidebar.button("Login"):
             "email": email,
             "password": password
         })
+
         st.session_state.user = user
         st.success("Eingeloggt")
-    except:
-        st.error("Login fehlgeschlagen")
+
+    except Exception as e:
+        st.error(e)
 
 if "user" not in st.session_state:
     st.stop()
@@ -61,9 +66,12 @@ if st.button("Speichern"):
         "marke": marke
     }
 
-    supabase.table("clothing").insert(data).execute()
+    try:
+        supabase.table("clothing").insert(data).execute()
+        st.success("Fundstück gespeichert")
 
-    st.success("Fundstück gespeichert")
+    except Exception as e:
+        st.error(e)
 
 # -------------------------
 # SUCHE
@@ -98,8 +106,9 @@ for item in result.data:
     st.write("Größe:", item["groesse"])
     st.write("Marke:", item["marke"])
 
-    if st.button(f"Löschen {item['id']}"):
+    if st.button("Löschen", key=item["id"]):
+
         supabase.table("clothing").delete().eq("id", item["id"]).execute()
-        st.experimental_rerun()
+        st.rerun()
 
     st.divider()
